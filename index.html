@@ -1,0 +1,2908 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="light" />
+  <title>Interactive 3D Cell Explorer — Organelles, Functions &amp; GLB Studio</title>
+  <style>
+    :root {
+      color-scheme: light;
+      /* Northwestern University (NU) Official Palette on Crisp White */
+      --nu-purple: #4E2A84;
+      --nu-purple-dark: #401F68;
+      --nu-purple-mid: #836EAA;
+      --nu-purple-light: #B6ACD1;
+      --nu-purple-tint: #E4E0EE;
+      --nu-purple-soft: #F5F3F9;
+      --bg-base: #FFFFFF;
+      --bg-surface: #FFFFFF;
+      --bg-elevated: #F5F3F9;
+      --bg-glass: rgba(255, 255, 255, 0.94);
+      --border-subtle: #DCD6EA;
+      --border-focus: #4E2A84;
+      --text-main: #1F1B24;
+      --text-muted: #5A5363;
+      --accent-primary: #4E2A84;
+      --accent-hover: #401F68;
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+      --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg-base);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      font-size: 14px;
+      line-height: 1.45;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top Header */
+    .topbar {
+      height: 60px;
+      padding: 0 18px;
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      z-index: 20;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-badge {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #4E2A84, #836EAA);
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      font-size: 13px;
+      letter-spacing: 0.5px;
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(78, 42, 132, 0.28);
+    }
+
+    .brand h1 {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: #4E2A84;
+    }
+
+    .subtitle {
+      font-size: 11.5px;
+      color: var(--text-muted);
+    }
+
+    .stats-pill-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--nu-purple-soft);
+      padding: 5px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border-subtle);
+    }
+
+    .stat-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 2px 10px;
+      border-right: 1px solid var(--border-subtle);
+      font-size: 12px;
+    }
+
+    .stat-pill:last-child {
+      border-right: none;
+    }
+
+    .stat-label {
+      color: var(--text-muted);
+    }
+
+    .stat-value {
+      font-family: var(--font-mono);
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .highlight-green {
+      color: #008656;
+    }
+
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      padding: 8px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.15s ease;
+      text-decoration: none;
+      color: var(--text-main);
+      user-select: none;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #4E2A84, #401F68);
+      border-color: #4E2A84;
+      color: #FFFFFF;
+      box-shadow: 0 2px 10px rgba(78, 42, 132, 0.25);
+    }
+
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #5d359b, #4E2A84);
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: var(--bg-elevated);
+      border-color: var(--border-subtle);
+      color: #401F68;
+    }
+
+    .btn-secondary:hover {
+      border-color: #4E2A84;
+      background: var(--nu-purple-tint);
+    }
+
+    .btn-xs {
+      padding: 5px 10px;
+      font-size: 12px;
+    }
+
+    .btn-block {
+      width: 100%;
+    }
+
+    .icon-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 15px;
+      width: 26px;
+      height: 26px;
+      border-radius: 6px;
+      display: grid;
+      place-items: center;
+    }
+
+    .icon-btn:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-main);
+    }
+
+    /* Main Workspace Layout */
+    .workspace {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 390px;
+      min-height: 0;
+    }
+
+    .viewport-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      background: #FFFFFF;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    #webgl-canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      outline: none;
+    }
+
+    .viewport-container.placing-hotspot {
+      cursor: crosshair;
+    }
+
+    /* 3D Hotspots Layer */
+    .hotspots-layer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .hotspot-pin {
+      position: absolute;
+      left: 0;
+      top: 0;
+      transform: translate(-50%, -50%);
+      pointer-events: auto;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: var(--pin-color, #4E2A84);
+      border: 2px solid #ffffff;
+      color: #ffffff;
+      font-weight: 800;
+      font-size: 11.5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 0 0 3px rgba(78, 42, 132, 0.22), 0 3px 10px rgba(31, 27, 36, 0.25);
+      transition: transform 0.18s ease, background 0.18s ease, opacity 0.2s ease, box-shadow 0.18s ease;
+    }
+
+    .hotspot-pin:hover,
+    .hotspot-pin:focus-visible,
+    .hotspot-pin.active {
+      transform: translate(-50%, -50%) scale(1.22);
+      background: #401F68;
+      box-shadow: 0 0 0 6px rgba(78, 42, 132, 0.28), 0 6px 18px rgba(31, 27, 36, 0.35);
+      z-index: 20;
+    }
+
+    .hotspot-pin.occluded {
+      opacity: 0.32;
+    }
+
+    .hotspot-pin-label {
+      display: none;
+      position: absolute;
+      left: 32px;
+      white-space: nowrap;
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(8px);
+      color: #1F1B24;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 11.5px;
+      font-weight: 600;
+      border: 1px solid #B6ACD1;
+      pointer-events: none;
+      box-shadow: 0 4px 12px rgba(78, 42, 132, 0.16);
+    }
+
+    .hotspot-pin:hover .hotspot-pin-label,
+    .hotspot-pin:focus-visible .hotspot-pin-label,
+    .hotspot-pin.active .hotspot-pin-label {
+      display: block;
+    }
+
+    .hotspot-pin.active .hotspot-pin-label {
+      border-color: #4E2A84;
+      background: #4E2A84;
+      color: #FFFFFF;
+    }
+
+    /* Active Organelle / Cell Function Detail Card */
+    .hotspot-card {
+      position: absolute;
+      top: 18px;
+      left: 18px;
+      width: 365px;
+      max-width: calc(100% - 36px);
+      background: var(--bg-glass);
+      backdrop-filter: blur(16px);
+      border: 1px solid #B6ACD1;
+      border-radius: var(--radius-md);
+      padding: 16px;
+      box-shadow: 0 14px 36px rgba(78, 42, 132, 0.16);
+      z-index: 15;
+    }
+
+    .hotspot-card-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .hotspot-card-badges {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .hotspot-card-badge {
+      background: #4E2A84;
+      color: #fff;
+      font-weight: 700;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 99px;
+    }
+
+    .hotspot-role-tag {
+      background: var(--nu-purple-tint);
+      color: #401F68;
+      border: 1px solid #B6ACD1;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 99px;
+    }
+
+    .hotspot-card h3 {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: #401F68;
+    }
+
+    .hotspot-card-summary {
+      font-size: 12.5px;
+      color: #342F2E;
+      margin-bottom: 10px;
+      line-height: 1.5;
+    }
+
+    .hotspot-functions-box {
+      background: var(--nu-purple-soft);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      margin-bottom: 12px;
+    }
+
+    .hotspot-functions-box h4 {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #4E2A84;
+      margin-bottom: 6px;
+    }
+
+    .hotspot-functions-list {
+      padding-left: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 12px;
+      color: #342F2E;
+    }
+
+    .hotspot-nav-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding-top: 10px;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .btn-text-danger {
+      background: none;
+      border: none;
+      color: #fb7185;
+      font-size: 11.5px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn-text-danger:hover {
+      text-decoration: underline;
+    }
+
+    .placement-banner {
+      position: absolute;
+      top: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #4E2A84;
+      color: #fff;
+      padding: 8px 16px;
+      border-radius: 999px;
+      font-weight: 600;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 8px 25px rgba(78, 42, 132, 0.35);
+      z-index: 16;
+    }
+
+    .placement-banner[hidden] {
+      display: none !important;
+    }
+
+    .placement-banner .btn {
+      background: #FFFFFF;
+      color: #401F68;
+      border-color: #E4E0EE;
+    }
+
+    .placement-banner .btn:hover {
+      background: #F5F3F9;
+    }
+
+    .viewport-toolbar {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--bg-glass);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-subtle);
+      padding: 6px 8px;
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      box-shadow: 0 10px 28px rgba(78, 42, 132, 0.14);
+      z-index: 12;
+    }
+
+    .tool-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .tool-btn:hover {
+      color: #4E2A84;
+      background: var(--nu-purple-soft);
+    }
+
+    .tool-btn.active {
+      color: #4E2A84;
+      background: var(--nu-purple-tint);
+      border-color: #B6ACD1;
+    }
+
+    .toolbar-divider {
+      width: 1px;
+      height: 18px;
+      background: var(--border-subtle);
+      margin: 0 4px;
+    }
+
+    .loading-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(6px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      z-index: 25;
+      transition: opacity 0.25s ease;
+      color: #401F68;
+    }
+
+    .loading-overlay[hidden] {
+      display: none !important;
+    }
+
+    .spinner {
+      width: 38px;
+      height: 38px;
+      border: 3px solid #E4E0EE;
+      border-top-color: #4E2A84;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Sidebar */
+    .sidebar {
+      background: var(--bg-surface);
+      border-left: 1px solid var(--border-subtle);
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      min-height: 0;
+    }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      border-bottom: 1px solid var(--border-subtle);
+      background: var(--nu-purple-soft);
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--text-muted);
+      padding: 12px 4px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .tab-btn:hover {
+      color: #4E2A84;
+    }
+
+    .tab-btn.active {
+      color: #4E2A84;
+      border-bottom-color: #4E2A84;
+      background: #FFFFFF;
+    }
+
+    .tab-panel {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      background: #FFFFFF;
+    }
+
+    .tab-panel[hidden] {
+      display: none !important;
+    }
+
+    .panel-card {
+      background: var(--nu-purple-soft);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 13px;
+    }
+
+    .highlight-card {
+      border-color: #B6ACD1;
+      background: linear-gradient(180deg, #F5F3F9, #FFFFFF);
+    }
+
+    .panel-card h3 {
+      font-size: 13.5px;
+      margin-bottom: 6px;
+    }
+
+    .muted-text {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.45;
+    }
+
+    .bar-breakdown {
+      height: 10px;
+      border-radius: 99px;
+      overflow: hidden;
+      display: flex;
+      margin: 10px 0 8px;
+      background: #0f172a;
+    }
+
+    .bar-geo { background: #f43f5e; }
+    .bar-tex { background: #10b981; }
+
+    .bar-legend {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: 4px;
+    }
+    .dot-geo { background: #f43f5e; }
+    .dot-tex { background: #10b981; }
+
+    .panel-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .group-title {
+      font-size: 11.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+    }
+
+    .group-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .preset-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .preset-item {
+      text-align: left;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 10px 12px;
+      cursor: pointer;
+      color: var(--text-main);
+      transition: all 0.15s ease;
+    }
+
+    .preset-item:hover {
+      border-color: #836EAA;
+    }
+
+    .preset-item.active {
+      border-color: #4E2A84;
+      background: var(--nu-purple-tint);
+      box-shadow: inset 0 0 0 1px rgba(78, 42, 132, 0.25);
+    }
+
+    .preset-main {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 3px;
+      font-size: 13px;
+    }
+
+    .preset-item p {
+      font-size: 11.5px;
+      color: var(--text-muted);
+    }
+
+    .badge {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 7px;
+      border-radius: 99px;
+    }
+
+    .badge-success { background: rgba(0, 134, 86, 0.14); color: #008656; }
+    .badge-info { background: var(--nu-purple-tint); color: #4E2A84; }
+    .badge-neutral { background: #E4E0EE; color: #401F68; }
+    .badge-warn { background: rgba(202, 124, 27, 0.16); color: #9A5809; }
+
+    .download-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .swatch-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .swatch-btn {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-main);
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .swatch-btn.active {
+      border-color: #4E2A84;
+      background: var(--nu-purple-tint);
+    }
+
+    .swatch-circle {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 1px solid rgba(78, 42, 132, 0.25);
+      flex-shrink: 0;
+    }
+
+    .control-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 0;
+      font-size: 12.5px;
+    }
+
+    .slider-control {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .slider-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+    }
+
+    .slider-header output {
+      font-family: var(--font-mono);
+      color: #4E2A84;
+      font-weight: 600;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: #4E2A84;
+      cursor: pointer;
+    }
+
+    select,
+    input[type="text"],
+    textarea {
+      width: 100%;
+      background: #FFFFFF;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 8px 10px;
+      color: var(--text-main);
+      font-family: inherit;
+      font-size: 13px;
+    }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font-size: 12.5px;
+      cursor: pointer;
+      padding: 3px 0;
+    }
+
+    .toggle-row input {
+      accent-color: #4E2A84;
+      width: 15px;
+      height: 15px;
+    }
+
+    .hotspot-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .hotspot-list-item {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .hotspot-list-item:hover,
+    .hotspot-list-item.active {
+      border-color: #4E2A84;
+      background: var(--nu-purple-tint);
+    }
+
+    .hotspot-list-item-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      margin-bottom: 4px;
+    }
+
+    .hotspot-list-item h4 {
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .hotspot-list-item p {
+      font-size: 11.5px;
+      color: var(--text-muted);
+    }
+
+    .drop-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(9, 13, 22, 0.85);
+      backdrop-filter: blur(8px);
+      z-index: 100;
+      display: grid;
+      place-items: center;
+    }
+
+    .drop-overlay[hidden] {
+      display: none !important;
+    }
+
+    .drop-box {
+      border: 2px dashed #38bdf8;
+      border-radius: var(--radius-lg);
+      padding: 48px 64px;
+      text-align: center;
+      background: rgba(14, 165, 233, 0.1);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .modal-dialog {
+      margin: auto;
+      background: var(--bg-surface);
+      color: var(--text-main);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      border-radius: var(--radius-md);
+      width: min(440px, 92vw);
+      padding: 0;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+    }
+
+    .modal-dialog::backdrop {
+      background: rgba(9, 13, 22, 0.75);
+      backdrop-filter: blur(4px);
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .modal-body {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .form-field {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .form-field label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .modal-footer {
+      padding: 12px 16px;
+      border-top: 1px solid var(--border-subtle);
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    /* Accessibility & UX Enhancements */
+    .skip-link {
+      position: absolute;
+      left: -9999px;
+      top: 8px;
+      z-index: 200;
+      background: #4E2A84;
+      color: #FFFFFF;
+      padding: 10px 16px;
+      border-radius: var(--radius-sm);
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .skip-link:focus {
+      left: 12px;
+      outline: 3px solid #FFFFFF;
+      box-shadow: 0 0 0 5px #4E2A84;
+    }
+
+    :focus-visible {
+      outline: 3px solid #4E2A84;
+      outline-offset: 2px;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .search-input-wrap {
+      position: relative;
+    }
+
+    .search-input-wrap input {
+      padding-left: 32px;
+      background: var(--nu-purple-soft);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      pointer-events: none;
+      font-size: 13px;
+    }
+
+    .quiz-banner {
+      position: absolute;
+      top: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(500px, calc(100% - 36px));
+      background: #FFFFFF;
+      border: 2px solid #4E2A84;
+      border-radius: var(--radius-md);
+      padding: 12px 16px;
+      box-shadow: 0 12px 32px rgba(78, 42, 132, 0.2);
+      z-index: 18;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .quiz-banner[hidden] {
+      display: none !important;
+    }
+
+    .quiz-banner-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      font-weight: 700;
+      color: #4E2A84;
+    }
+
+    .quiz-question {
+      font-size: 14px;
+      font-weight: 600;
+      color: #1F1B24;
+    }
+
+    .quiz-feedback {
+      font-size: 12.5px;
+      font-weight: 600;
+    }
+
+    .quiz-feedback.correct { color: #008656; }
+    .quiz-feedback.wrong { color: #B42318; }
+
+    body.quiz-active .hotspot-pin-label {
+      display: none;
+    }
+
+    .toast-banner {
+      position: fixed;
+      bottom: 76px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #401F68;
+      color: #FFFFFF;
+      padding: 8px 16px;
+      border-radius: 999px;
+      font-size: 12.5px;
+      font-weight: 600;
+      box-shadow: 0 8px 20px rgba(31, 27, 36, 0.25);
+      z-index: 50;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    .toast-banner.visible {
+      opacity: 1;
+    }
+
+    .shortcut-grid {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 8px 14px;
+      align-items: center;
+      font-size: 13px;
+    }
+
+    kbd {
+      background: var(--nu-purple-soft);
+      border: 1px solid #B6ACD1;
+      border-radius: 5px;
+      padding: 2px 7px;
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #401F68;
+      text-align: center;
+    }
+
+    body.large-text {
+      font-size: 16px;
+    }
+    body.large-text .hotspot-card-summary,
+    body.large-text .hotspot-functions-list,
+    body.large-text .muted-text {
+      font-size: 14px;
+    }
+    body.large-text .hotspot-list-item h4 {
+      font-size: 14.5px;
+    }
+
+    @media (max-width: 980px) {
+      html, body {
+        overflow: auto;
+      }
+      .stats-pill-group {
+        display: none;
+      }
+      .workspace {
+        grid-template-columns: 1fr;
+        grid-template-rows: 58vh auto;
+      }
+      .sidebar {
+        border-left: none;
+        border-top: 1px solid var(--border-subtle);
+        height: auto;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <a href="#viewport-container" class="skip-link">Skip to 3D Cell Viewport</a>
+  <div id="a11y-announcer" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+  <div id="toast-banner" class="toast-banner" role="status" aria-live="polite"></div>
+
+  <!-- Drag-and-drop full-window overlay -->
+  <div id="drop-overlay" class="drop-overlay" hidden>
+    <div class="drop-box">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+        <polyline points="17 8 12 3 7 8" />
+        <line x1="12" y1="3" x2="12" y2="15" />
+      </svg>
+      <h2>Drop your <code>.glb</code> or <code>.gltf</code> file</h2>
+      <p>Loads instantaneously with full material, animation, hotspot &amp; size inspection</p>
+    </div>
+  </div>
+
+  <!-- Top Header Bar -->
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-badge" aria-hidden="true">BIO</span>
+      <div>
+        <h1 id="model-title">Interactive 3D Cell Atlas (cells.glb)</h1>
+        <p class="subtitle" id="model-subtitle">Click any numbered 3D hotspot pin to explore cellular organelles &amp; biological functions</p>
+      </div>
+    </div>
+
+    <div class="stats-pill-group" role="region" aria-label="3D Model Statistics">
+      <div class="stat-pill">
+        <span class="stat-label">GLB Size</span>
+        <strong class="stat-value highlight-green" id="stat-filesize">60.05 MB (Original)</strong>
+      </div>
+      <div class="stat-pill">
+        <span class="stat-label">Vertices</span>
+        <strong class="stat-value" id="stat-verts">1,219,782</strong>
+      </div>
+      <div class="stat-pill">
+        <span class="stat-label">Triangles</span>
+        <strong class="stat-value" id="stat-tris">1,976,499</strong>
+      </div>
+      <div class="stat-pill">
+        <span class="stat-label">FPS</span>
+        <strong class="stat-value" id="stat-fps">60</strong>
+      </div>
+    </div>
+
+    <div class="topbar-actions">
+      <button type="button" id="btn-guided-tour" class="btn btn-secondary" title="Automatically tour all 8 cell organelles">
+        ▶ Guided Tour
+      </button>
+
+      <button type="button" id="btn-quiz-mode" class="btn btn-secondary" aria-pressed="false" title="Test your knowledge of cell functions">
+        Quiz Me
+      </button>
+
+      <button type="button" id="btn-large-text" class="btn btn-secondary btn-xs" aria-pressed="false" title="Toggle Larger Readable Text">
+        A+
+      </button>
+
+      <button type="button" id="btn-shortcuts" class="btn btn-secondary btn-xs" title="Keyboard Shortcuts &amp; Accessibility (?)">
+        ?
+      </button>
+
+      <label class="btn btn-secondary" for="file-input" tabindex="0">
+        Load .GLB
+      </label>
+      <input type="file" id="file-input" accept=".glb,.gltf" hidden />
+
+      <button type="button" id="btn-download-glb" class="btn btn-primary" title="Download cells.glb">
+        Download .GLB
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Workspace -->
+  <main class="workspace">
+    <!-- 3D Viewport Stage -->
+    <section class="viewport-container" id="viewport-container" aria-label="Interactive 3D Cell Viewport">
+      <canvas id="webgl-canvas" tabindex="0" role="application" aria-label="Interactive 3D cell model. Drag to rotate, scroll to zoom, or press keys 1 through 8 to inspect organelles."></canvas>
+
+      <!-- Interactive Study / Quiz Mode Banner -->
+      <div id="quiz-banner" class="quiz-banner" hidden role="region" aria-label="Cell Function Quiz">
+        <div class="quiz-banner-top">
+          <span id="quiz-progress">Question 1 of 8 • Score: 0</span>
+          <button type="button" id="btn-exit-quiz" class="btn btn-xs btn-secondary">Exit Quiz</button>
+        </div>
+        <p class="quiz-question" id="quiz-question-text">Click the 3D hotspot pin for the organelle that generates ATP.</p>
+        <p class="quiz-feedback" id="quiz-feedback-text" aria-live="polite"></p>
+      </div>
+
+      <div id="hotspots-layer" class="hotspots-layer" aria-live="polite"></div>
+
+      <!-- Active Cell Organelle & Function Info Card -->
+      <aside id="hotspot-card" class="hotspot-card" hidden aria-label="Selected Cell Organelle Function Details">
+        <div class="hotspot-card-top">
+          <div class="hotspot-card-badges">
+            <span class="hotspot-card-badge" id="hotspot-card-index">#1</span>
+            <span class="hotspot-role-tag" id="hotspot-card-role">Genetic Control Center</span>
+          </div>
+          <button type="button" id="hotspot-card-close" class="icon-btn" aria-label="Close annotation card">✕</button>
+        </div>
+
+        <h3 id="hotspot-card-title">Nucleus &amp; Nucleolus</h3>
+        <p class="hotspot-card-summary" id="hotspot-card-desc">
+          The command center of the eukaryotic cell, housing chromosomal DNA and coordinating gene expression, growth, and reproduction.
+        </p>
+
+        <div class="hotspot-functions-box">
+          <h4>Key Cellular Functions</h4>
+          <ul class="hotspot-functions-list" id="hotspot-card-functions"></ul>
+        </div>
+
+        <div class="hotspot-nav-bar">
+          <button type="button" id="btn-prev-hotspot" class="btn btn-xs btn-secondary">◀ Prev Organelle</button>
+          <button type="button" id="hotspot-card-delete" class="btn-text-danger" title="Remove this pin">Delete Pin</button>
+          <button type="button" id="btn-next-hotspot" class="btn btn-xs btn-primary">Next Organelle ▶</button>
+        </div>
+      </aside>
+
+      <div id="placement-banner" class="placement-banner" hidden>
+        <span>Click anywhere on the 3D cell surface to add a custom organelle hotspot</span>
+        <button type="button" id="btn-cancel-placement" class="btn btn-xs">Cancel (Esc)</button>
+      </div>
+
+      <div id="loading-overlay" class="loading-overlay">
+        <div class="spinner" aria-hidden="true"></div>
+        <p id="loading-text">Loading 3D Cell Model…</p>
+      </div>
+
+      <div class="viewport-toolbar" role="toolbar" aria-label="Camera and Viewport Controls">
+        <button type="button" class="tool-btn" data-cam="reset" title="Reset Camera View">Reset View</button>
+        <button type="button" class="tool-btn" data-cam="front" title="Front View">Front</button>
+        <button type="button" class="tool-btn" data-cam="side" title="Side View">Side</button>
+        <button type="button" class="tool-btn" data-cam="top" title="Top View">Top</button>
+        <span class="toolbar-divider" aria-hidden="true"></span>
+        <button type="button" class="tool-btn active" id="btn-toggle-hotspots" aria-pressed="true">Hotspots (8)</button>
+        <button type="button" class="tool-btn" id="btn-add-hotspot" aria-pressed="false">+ Add Hotspot</button>
+        <button type="button" class="tool-btn active" id="btn-toggle-grid" aria-pressed="true">Grid</button>
+        <button type="button" class="tool-btn" id="btn-reduce-motion" aria-pressed="false" title="Disable pulsing &amp; camera flight animations">Reduce Motion</button>
+        <button type="button" class="tool-btn" id="btn-screenshot" title="Save PNG Screenshot">Screenshot</button>
+      </div>
+    </section>
+
+    <!-- Right Control Sidebar -->
+    <aside class="sidebar" aria-label="3D Cell Functions and Controls">
+      <div class="tabs" role="tablist" aria-label="Inspector Sections">
+        <button type="button" role="tab" aria-selected="true" aria-controls="panel-hotspots" id="tab-hotspots" class="tab-btn active">
+          Cell Functions (8)
+        </button>
+        <button type="button" role="tab" aria-selected="false" aria-controls="panel-materials" id="tab-materials" class="tab-btn">
+          Materials
+        </button>
+        <button type="button" role="tab" aria-selected="false" aria-controls="panel-animate" id="tab-animate" class="tab-btn">
+          Animate
+        </button>
+        <button type="button" role="tab" aria-selected="false" aria-controls="panel-optimize" id="tab-optimize" class="tab-btn">
+          GLB Size
+        </button>
+      </div>
+
+      <!-- TAB 1 (DEFAULT): CELL ORGANELLES & FUNCTIONS HOTSPOTS -->
+      <section id="panel-hotspots" role="tabpanel" aria-labelledby="tab-hotspots" class="tab-panel">
+        <div class="panel-group">
+          <div class="group-header-row">
+            <label class="group-title">All Cell Organelles &amp; Functions</label>
+            <button type="button" id="btn-sidebar-add-hotspot" class="btn btn-xs btn-primary">+ Add Custom Pin</button>
+          </div>
+          <div class="search-input-wrap">
+            <span class="search-icon" aria-hidden="true">🔍</span>
+            <input type="search" id="input-organelle-search" placeholder="Filter by organelle or function (e.g. ATP, DNA, protein)…" aria-label="Filter cell organelles and functions" />
+          </div>
+          <p class="muted-text">
+            Click any cell organelle below (or press keys <strong>1–8</strong>) to zoom in and inspect its biological functions:
+          </p>
+          <div id="hotspot-sidebar-list" class="hotspot-list"></div>
+        </div>
+      </section>
+
+      <!-- TAB 2: MATERIALS & COLOR CONFIGURATOR -->
+      <section id="panel-materials" role="tabpanel" aria-labelledby="tab-materials" class="tab-panel" hidden>
+        <div class="panel-group">
+          <label class="group-title">Biological &amp; Microscopy Stains</label>
+          <div class="swatch-grid" id="color-swatches">
+            <button type="button" class="swatch-btn active" data-tint="#ffffff" data-emissive="#000000" title="Natural Original Texture">
+              <span class="swatch-circle" style="background: linear-gradient(135deg, #f3a683, #e15f41);"></span>
+              <span>Natural</span>
+            </button>
+            <button type="button" class="swatch-btn" data-tint="#67e8f9" data-emissive="#083344" title="Bioluminescent Cyan">
+              <span class="swatch-circle" style="background: linear-gradient(135deg, #22d3ee, #0284c7);"></span>
+              <span>Bio-Cyan</span>
+            </button>
+            <button type="button" class="swatch-btn" data-tint="#6ee7b7" data-emissive="#064e3b" title="GFP Fluorescence Green">
+              <span class="swatch-circle" style="background: linear-gradient(135deg, #34d399, #059669);"></span>
+              <span>GFP Green</span>
+            </button>
+            <button type="button" class="swatch-btn" data-tint="#f472b6" data-emissive="#500724" title="H&E Histology Stain">
+              <span class="swatch-circle" style="background: linear-gradient(135deg, #f472b6, #9333ea);"></span>
+              <span>H&amp;E Stain</span>
+            </button>
+            <button type="button" class="swatch-btn" data-tint="#fcd34d" data-emissive="#451a03" title="Cryo-EM Amber Gold">
+              <span class="swatch-circle" style="background: linear-gradient(135deg, #fbbf24, #d97706);"></span>
+              <span>Amber</span>
+            </button>
+            <button type="button" class="swatch-btn" data-tint="#cbd5e1" data-emissive="#0f172a" data-mono="true" title="Scanning Electron Microscope">
+              <span class="swatch-circle" style="background: linear-gradient(135deg, #e2e8f0, #475569);"></span>
+              <span>SEM Mono</span>
+            </button>
+          </div>
+
+          <div class="control-row">
+            <label for="input-custom-color">Custom Tint Color</label>
+            <input type="color" id="input-custom-color" value="#ffffff" />
+          </div>
+        </div>
+
+        <div class="panel-group">
+          <label class="group-title">Surface PBR Properties</label>
+
+          <div class="slider-control">
+            <div class="slider-header">
+              <label for="slider-roughness">Roughness (Wet ↔ Matte)</label>
+              <output id="out-roughness" for="slider-roughness">0.65</output>
+            </div>
+            <input type="range" id="slider-roughness" min="0" max="1" step="0.01" value="0.65" />
+          </div>
+
+          <div class="slider-control">
+            <div class="slider-header">
+              <label for="slider-metalness">Metalness</label>
+              <output id="out-metalness" for="slider-metalness">0.10</output>
+            </div>
+            <input type="range" id="slider-metalness" min="0" max="1" step="0.01" value="0.10" />
+          </div>
+
+          <div class="slider-control">
+            <div class="slider-header">
+              <label for="slider-normal">Normal Map Relief</label>
+              <output id="out-normal" for="slider-normal">1.00</output>
+            </div>
+            <input type="range" id="slider-normal" min="0" max="2.5" step="0.05" value="1.00" />
+          </div>
+
+          <div class="slider-control">
+            <div class="slider-header">
+              <label for="slider-opacity">Membrane Opacity (X-Ray)</label>
+              <output id="out-opacity" for="slider-opacity">1.00</output>
+            </div>
+            <input type="range" id="slider-opacity" min="0.15" max="1" step="0.01" value="1.00" />
+          </div>
+
+          <div class="slider-control">
+            <div class="slider-header">
+              <label for="slider-exposure">Lighting Exposure</label>
+              <output id="out-exposure" for="slider-exposure">1.15</output>
+            </div>
+            <input type="range" id="slider-exposure" min="0.3" max="2.5" step="0.05" value="1.15" />
+          </div>
+        </div>
+
+        <div class="panel-group">
+          <label class="group-title">Embedded Texture Maps &amp; Mesh</label>
+          <label class="toggle-row">
+            <input type="checkbox" id="chk-basecolor" checked />
+            <span>BaseColor Texture (150 KB JPEG)</span>
+          </label>
+          <label class="toggle-row">
+            <input type="checkbox" id="chk-normalmap" checked />
+            <span>Normal Map Texture (26 KB JPEG)</span>
+          </label>
+          <label class="toggle-row">
+            <input type="checkbox" id="chk-rmmap" checked />
+            <span>Roughness/Metallic Map (41 KB JPEG)</span>
+          </label>
+          <label class="toggle-row">
+            <input type="checkbox" id="chk-wireframe" />
+            <span>Show 3D Triangle Wireframe</span>
+          </label>
+        </div>
+      </section>
+
+      <!-- TAB 3: ANIMATIONS (EMBEDDED + PROCEDURAL) -->
+      <section id="panel-animate" role="tabpanel" aria-labelledby="tab-animate" class="tab-panel" hidden>
+        <div class="panel-group">
+          <label class="group-title">Procedural 3D Cell Motion</label>
+          <div class="preset-list" id="proc-anim-list">
+            <button type="button" class="preset-item active" data-anim="respiration">
+              <div class="preset-main">
+                <strong>Organic Cellular Respiration</strong>
+                <span class="badge badge-success">Active</span>
+              </div>
+              <p>Gentle biological cell breathing &amp; cytoplasmic pulse (keeps pins steady for reading)</p>
+            </button>
+
+            <button type="button" class="preset-item" data-anim="pulse-turntable">
+              <div class="preset-main">
+                <strong>Respiration + 360° Orbit</strong>
+              </div>
+              <p>Cell breathing combined with continuous turntable rotation</p>
+            </button>
+
+            <button type="button" class="preset-item" data-anim="float">
+              <div class="preset-main">
+                <strong>Microscopy Suspension Float</strong>
+              </div>
+              <p>Zero-gravity fluid drift and harmonic tilting</p>
+            </button>
+
+            <button type="button" class="preset-item" data-anim="turntable">
+              <div class="preset-main">
+                <strong>360° Studio Turntable</strong>
+              </div>
+              <p>Steady rotation for all-around inspection</p>
+            </button>
+
+            <button type="button" class="preset-item" data-anim="none">
+              <div class="preset-main">
+                <strong>Static (Paused)</strong>
+              </div>
+              <p>Disable all procedural motion</p>
+            </button>
+          </div>
+        </div>
+
+        <div class="panel-group">
+          <label class="group-title">Playback Controls</label>
+          <div class="playback-bar">
+            <button type="button" id="btn-play-pause" class="btn btn-primary btn-block">
+              Pause Animation
+            </button>
+          </div>
+
+          <div class="slider-control">
+            <div class="slider-header">
+              <label for="slider-anim-speed">Animation Speed</label>
+              <output id="out-anim-speed" for="slider-anim-speed">1.0x</output>
+            </div>
+            <input type="range" id="slider-anim-speed" min="0.1" max="2.5" step="0.1" value="1.0" />
+          </div>
+
+          <div class="slider-control">
+            <div class="slider-header">
+              <label for="slider-pulse-amp">Cellular Pulse Intensity</label>
+              <output id="out-pulse-amp" for="slider-pulse-amp">1.5%</output>
+            </div>
+            <input type="range" id="slider-pulse-amp" min="0" max="15" step="0.5" value="1.5" />
+          </div>
+        </div>
+
+        <div class="panel-group">
+          <label class="group-title">Embedded .GLB Keyframe Clips</label>
+          <select id="select-gltf-clip" aria-label="Embedded GLB Animation Clip">
+            <option value="none">No embedded keyframe clips in cells.glb</option>
+          </select>
+          <p class="muted-text" id="clip-status-note">
+            <code>cells.glb</code> is a static mesh (0 keyframe tracks). Drop any animated <code>.glb</code> to play its embedded clips here.
+          </p>
+        </div>
+      </section>
+
+      <!-- TAB 4: GLB SIZE & LOD OPTIMIZER -->
+      <section id="panel-optimize" role="tabpanel" aria-labelledby="tab-optimize" class="tab-panel" hidden>
+        <div class="panel-card highlight-card">
+          <h3>How <code>cells.glb</code> Was Reduced by 95.7%</h3>
+          <p class="muted-text">
+            Your original Tripo model was <strong>60.05 MB</strong> because <strong>99.7% (59.84 MB)</strong> was 1.98M uncompressed triangles while textures were only <strong>217 KB</strong>.
+          </p>
+          <div class="bar-breakdown" aria-label="Original File Size Breakdown">
+            <div class="bar-segment bar-geo" style="width: 99.6%" title="Geometry: 59.84 MB (99.7%)"></div>
+            <div class="bar-segment bar-tex" style="width: 0.4%" title="Textures: 0.21 MB (0.3%)"></div>
+          </div>
+          <div class="bar-legend">
+            <span><i class="dot dot-geo"></i> Geometry: 59.84 MB (99.7%)</span>
+            <span><i class="dot dot-tex"></i> 3 JPEG Textures: 217 KB (0.3%)</span>
+          </div>
+        </div>
+
+        <div class="panel-group">
+          <label class="group-title">Switch Optimized Preset</label>
+          <div class="preset-list" id="lod-preset-list">
+            <button type="button" class="preset-item" data-lod="cells-lite.glb" data-size="2.61 MB (-95.7%)">
+              <div class="preset-main">
+                <strong>Ultra-Lite Web</strong>
+                <span class="badge badge-success">2.61 MB • -95.7%</span>
+              </div>
+              <p>63,756 verts • 79,930 tris • 16-bit indices • UV-seam locked</p>
+            </button>
+
+            <button type="button" class="preset-item" data-lod="cells.glb" data-size="7.76 MB (-87.1%)">
+              <div class="preset-main">
+                <strong>Balanced High-Res</strong>
+                <span class="badge badge-info">7.76 MB • -87.1%</span>
+              </div>
+              <p>155,407 verts • 245,764 tris • 32-bit indices</p>
+            </button>
+
+            <button type="button" class="preset-item" data-lod="cells-hd.glb" data-size="17.74 MB (-70.5%)">
+              <div class="preset-main">
+                <strong>Studio HD</strong>
+                <span class="badge badge-neutral">17.74 MB • -70.5%</span>
+              </div>
+              <p>341,687 verts • 620,722 tris</p>
+            </button>
+
+            <button type="button" class="preset-item active" data-lod="cells-original.glb" data-size="60.05 MB (Original)">
+              <div class="preset-main">
+                <strong>Original Raw File (Active)</strong>
+                <span class="badge badge-warn">60.05 MB • 0%</span>
+              </div>
+              <p>1,219,782 verts • 1,976,499 tris</p>
+            </button>
+          </div>
+        </div>
+      </section>
+    </aside>
+  </main>
+
+  <!-- Native HTML <dialog> for Adding a Custom 3D Hotspot -->
+  <dialog id="dialog-add-hotspot" class="modal-dialog">
+    <form id="form-add-hotspot" method="dialog">
+      <div class="modal-header">
+        <h3>Add Custom Cell Organelle Hotspot</h3>
+        <button type="button" id="btn-close-dialog" class="icon-btn" aria-label="Close dialog">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="muted-text" id="dialog-coords-preview">Surface Point: (0.00, 0.00, 0.00)</p>
+        <div class="form-field">
+          <label for="input-hotspot-title">Organelle / Structure Name</label>
+          <input type="text" id="input-hotspot-title" required placeholder="e.g., Centrosome & Microtubules" maxlength="60" />
+        </div>
+        <div class="form-field">
+          <label for="input-hotspot-role">Primary Functional Role Badge</label>
+          <input type="text" id="input-hotspot-role" placeholder="e.g., Cell Division & Mitotic Spindle" maxlength="50" />
+        </div>
+        <div class="form-field">
+          <label for="input-hotspot-desc">Function Summary &amp; Details</label>
+          <textarea id="input-hotspot-desc" rows="3" required placeholder="Explain how this structure functions inside the cell..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="btn-cancel-dialog" class="btn btn-secondary">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Hotspot</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Native HTML <dialog> for Keyboard Shortcuts & Accessibility Guide -->
+  <dialog id="dialog-shortcuts" class="modal-dialog" aria-labelledby="shortcuts-title">
+    <div class="modal-header">
+      <h3 id="shortcuts-title">Keyboard Shortcuts &amp; Accessibility</h3>
+      <button type="button" id="btn-close-shortcuts" class="icon-btn" aria-label="Close shortcuts dialog">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="shortcut-grid">
+        <kbd>1</kbd>–<kbd>8</kbd> <span>Jump directly to Cell Organelle #1–#8</span>
+        <kbd>←</kbd> / <kbd>→</kbd> <span>Previous / Next Cell Organelle</span>
+        <kbd>Space</kbd> <span>Pause or resume 3D cell breathing animation</span>
+        <kbd>R</kbd> <span>Reset 3D camera to default view</span>
+        <kbd>H</kbd> <span>Show or hide 3D hotspot pins</span>
+        <kbd>?</kbd> <span>Open this keyboard shortcuts guide</span>
+        <kbd>Esc</kbd> <span>Cancel hotspot placement or close dialogs</span>
+      </div>
+      <p class="muted-text">
+        Use <strong>Reduce Motion</strong> in the bottom toolbar to stop all animations, or <strong>A+</strong> in the top bar for larger text.
+      </p>
+    </div>
+    <div class="modal-footer">
+      <button type="button" id="btn-done-shortcuts" class="btn btn-primary">Got It</button>
+    </div>
+  </dialog>
+
+  <!-- Synchronous inline fallback script so file:// protocol has the 2.61 MB GLB ready in memory -->
+  <script src="cells-inline-fallback.js"></script>
+
+  <!-- Inline ES Module so Chrome/Edge file:// CORS never blocks external module scripts -->
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+    import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+    import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+    const viewportContainer = document.getElementById('viewport-container');
+    const canvas = document.getElementById('webgl-canvas');
+    const hotspotsLayer = document.getElementById('hotspots-layer');
+    const loadingOverlay = document.getElementById('loading-overlay');
+    const loadingText = document.getElementById('loading-text');
+    const dropOverlay = document.getElementById('drop-overlay');
+
+    const modelTitleEl = document.getElementById('model-title');
+    const modelSubtitleEl = document.getElementById('model-subtitle');
+    const statFilesizeEl = document.getElementById('stat-filesize');
+    const statVertsEl = document.getElementById('stat-verts');
+    const statTrisEl = document.getElementById('stat-tris');
+    const statFpsEl = document.getElementById('stat-fps');
+
+    const hotspotCard = document.getElementById('hotspot-card');
+    const hotspotCardIndex = document.getElementById('hotspot-card-index');
+    const hotspotCardRole = document.getElementById('hotspot-card-role');
+    const hotspotCardTitle = document.getElementById('hotspot-card-title');
+    const hotspotCardDesc = document.getElementById('hotspot-card-desc');
+    const hotspotCardFunctions = document.getElementById('hotspot-card-functions');
+    const hotspotCardClose = document.getElementById('hotspot-card-close');
+    const hotspotCardDelete = document.getElementById('hotspot-card-delete');
+    const hotspotSidebarList = document.getElementById('hotspot-sidebar-list');
+
+    const placementBanner = document.getElementById('placement-banner');
+    const btnCancelPlacement = document.getElementById('btn-cancel-placement');
+    const dialogAddHotspot = document.getElementById('dialog-add-hotspot');
+    const formAddHotspot = document.getElementById('form-add-hotspot');
+    const inputHotspotTitle = document.getElementById('input-hotspot-title');
+    const inputHotspotRole = document.getElementById('input-hotspot-role');
+    const inputHotspotDesc = document.getElementById('input-hotspot-desc');
+    const dialogCoordsPreview = document.getElementById('dialog-coords-preview');
+
+    const renderer = new THREE.WebGLRenderer({
+      canvas,
+      antialias: true,
+      powerPreference: 'high-performance',
+      preserveDrawingBuffer: true
+    });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.15;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xffffff);
+
+    const pmremGenerator = new THREE.PMREMGenerator(renderer);
+    scene.environment = pmremGenerator.fromScene(new RoomEnvironment(), 0.04).texture;
+
+    const keyLight = new THREE.DirectionalLight(0xffffff, 1.35);
+    keyLight.position.set(2.5, 4.0, 3.0);
+    scene.add(keyLight);
+
+    const rimLight = new THREE.DirectionalLight(0x836EAA, 0.75);
+    rimLight.position.set(-3.0, 1.5, -2.5);
+    scene.add(rimLight);
+
+    const gridHelper = new THREE.GridHelper(3.0, 24, 0x836EAA, 0xE4E0EE);
+    gridHelper.position.y = -0.002;
+    gridHelper.material.opacity = 0.65;
+    gridHelper.material.transparent = true;
+    scene.add(gridHelper);
+
+    const camera = new THREE.PerspectiveCamera(42, 1, 0.01, 100);
+    const DEFAULT_CAM_POS = new THREE.Vector3(0.0, 0.92, 1.15);
+    const DEFAULT_CAM_TARGET = new THREE.Vector3(0.0, 0.36, 0.0);
+    camera.position.copy(DEFAULT_CAM_POS);
+
+    const controls = new OrbitControls(camera, canvas);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
+    controls.minDistance = 0.25;
+    controls.maxDistance = 8.0;
+    controls.target.copy(DEFAULT_CAM_TARGET);
+    controls.update();
+
+    const modelPivot = new THREE.Group();
+    scene.add(modelPivot);
+
+    const cursorRingGeo = new THREE.RingGeometry(0.014, 0.022, 32);
+    const cursorRingMat = new THREE.MeshBasicMaterial({
+      color: 0x38bdf8,
+      side: THREE.DoubleSide,
+      depthTest: false,
+      transparent: true,
+      opacity: 0.95
+    });
+    const surfaceCursor = new THREE.Mesh(cursorRingGeo, cursorRingMat);
+    surfaceCursor.visible = false;
+    scene.add(surfaceCursor);
+
+    const gltfLoader = new GLTFLoader();
+    const dracoLoader = new DRACOLoader();
+    dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.7/');
+    gltfLoader.setDRACOLoader(dracoLoader);
+
+    let currentModelRoot = null;
+    let currentActiveFileUrl = 'cells-original.glb';
+    let currentCustomBlobUrl = null;
+    let meshList = [];
+    let animationMixer = null;
+    let gltfClips = [];
+
+    let isPlayingAnim = true;
+    let procAnimMode = 'respiration';
+    let animSpeed = 1.0;
+    let pulseAmplitude = 0.015;
+    let elapsedAnimTime = 0;
+    let reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    let hotspotsVisible = true;
+    let isPlacingHotspot = false;
+    let pendingHotspotHit = null;
+    let activeHotspotId = null;
+    let camTransition = null;
+    let guidedTourTimer = null;
+
+    // Accessibility & Toast Helpers
+    const a11yAnnouncer = document.getElementById('a11y-announcer');
+    const toastBanner = document.getElementById('toast-banner');
+    let toastTimer = null;
+
+    function announce(msg) {
+      if (a11yAnnouncer) a11yAnnouncer.textContent = msg;
+    }
+
+    function showToast(msg) {
+      announce(msg);
+      if (!toastBanner) return;
+      toastBanner.textContent = msg;
+      toastBanner.classList.add('visible');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toastBanner.classList.remove('visible'), 2200);
+    }
+
+    // Comprehensive 8 Cell Organelles & All Major Cellular Functions anchored to cells.glb 3D surface (NU Palette)
+    const hotspots = [
+      {
+        id: 'hs-1',
+        title: 'Nucleus & Nucleolus',
+        role: 'Genetic Control Center',
+        color: '#4E2A84',
+        description: 'The command center of the eukaryotic cell that houses chromosomal DNA inside a double-layered nuclear envelope and coordinates cellular reproduction and gene expression.',
+        functions: [
+          'DNA Storage & Replication: Protects the cell’s genome and duplicates DNA prior to mitosis.',
+          'Transcription (DNA → mRNA): Synthesizes messenger RNA instructions to direct protein production.',
+          'Nucleolus Ribosome Biogenesis: Assembles ribosomal RNA (rRNA) with proteins to form ribosomal subunits.'
+        ],
+        position: new THREE.Vector3(-0.0400, 0.3500, 0.0800),
+        normal: new THREE.Vector3(0.0000, 0.7000, 0.7100),
+        anchorObj: null,
+        domEl: null
+      },
+      {
+        id: 'hs-2',
+        title: 'Mitochondria',
+        role: 'ATP Energy Powerhouse',
+        color: '#CA7C1B',
+        description: 'Double-membrane organelles with folded inner cristae and their own mitochondrial DNA that generate the chemical energy currency (ATP) required for life.',
+        functions: [
+          'Aerobic Cellular Respiration: Runs the Citric Acid (Krebs) Cycle and Oxidative Phosphorylation.',
+          'ATP Synthesis: Uses proton gradients across the inner membrane to convert ADP into ATP.',
+          'Apoptosis & Calcium Homeostasis: Regulates programmed cell death and buffers intracellular calcium ions.'
+        ],
+        position: new THREE.Vector3(0.2600, 0.2250, 0.2200),
+        normal: new THREE.Vector3(0.2000, 0.8500, 0.4800),
+        anchorObj: null,
+        domEl: null
+      },
+      {
+        id: 'hs-3',
+        title: 'Endoplasmic Reticulum (Rough & Smooth ER)',
+        role: 'Biosynthesis & Transport Network',
+        color: '#836EAA',
+        description: 'An extensive labyrinth of membranes continuous with the nuclear envelope, divided into ribosome-studded Rough ER and tubular Smooth ER.',
+        functions: [
+          'Rough ER Protein Folding: Folds, modifies, and quality-checks secretory and membrane proteins.',
+          'Smooth ER Lipid & Steroid Synthesis: Produces phospholipids, cholesterol, and steroid hormones.',
+          'Detoxification & Ca²⁺ Storage: Neutralizes metabolic toxins and stores calcium for cellular signaling.'
+        ],
+        position: new THREE.Vector3(0.1550, 0.2900, 0.1300),
+        normal: new THREE.Vector3(0.1586, 0.6500, 0.7400),
+        anchorObj: null,
+        domEl: null
+      },
+      {
+        id: 'hs-4',
+        title: 'Golgi Apparatus',
+        role: 'Sorting, Packaging & Secretion',
+        color: '#401F68',
+        description: 'Stacks of flattened membrane-bound cisternae (cis, medial, and trans faces) acting as the cell’s post office and molecular modification hub.',
+        functions: [
+          'Post-Translational Modification: Adds carbohydrate chains (glycosylation) and phosphate tags to proteins.',
+          'Vesicle Sorting & Trafficking: Packages cargo into transport vesicles bound for organelles or secretion.',
+          'Lysosome Formation: Manufactures digestive enzyme vesicles for intracellular recycling.'
+        ],
+        position: new THREE.Vector3(-0.1600, 0.2300, 0.2200),
+        normal: new THREE.Vector3(-0.1500, 0.8000, 0.5800),
+        anchorObj: null,
+        domEl: null
+      },
+      {
+        id: 'hs-5',
+        title: 'Plasma Cell Membrane',
+        role: 'Selective Barrier & Signaling',
+        color: '#008656',
+        description: 'A dynamic fluid-mosaic phospholipid bilayer embedded with ion channels, transport pumps, glycoproteins, and receptor complexes.',
+        functions: [
+          'Selective Permeability: Controls entry of nutrients (glucose, amino acids) and exit of waste via active/passive transport.',
+          'Signal Transduction: Surface receptors detect hormones, neurotransmitters, and growth factors.',
+          'Endocytosis & Exocytosis: Engulfs extracellular cargo and fuses secretory vesicles with the exterior.'
+        ],
+        position: new THREE.Vector3(-0.3600, 0.1450, 0.2200),
+        normal: new THREE.Vector3(-0.4500, 0.2000, 0.8700),
+        anchorObj: null,
+        domEl: null
+      },
+      {
+        id: 'hs-6',
+        title: 'Lysosomes & Peroxisomes',
+        role: 'Cellular Digestion & Detox',
+        color: '#EF553F',
+        description: 'Specialized enzymatic vesicles that break down worn-out cellular components, invading pathogens, and reactive oxygen species.',
+        functions: [
+          'Autophagy & Recycling: Acidic hydrolytic enzymes digest damaged organelles into reusable building blocks.',
+          'Phagocytosis Defense: Destroys engulfed bacteria and viral particles.',
+          'Peroxisomal Fatty Acid Oxidation: Breaks down very-long-chain fatty acids and neutralizes hydrogen peroxide (H₂O₂) via catalase.'
+        ],
+        position: new THREE.Vector3(-0.2200, 0.4600, -0.1200),
+        normal: new THREE.Vector3(-0.1911, 0.5500, 0.8100),
+        anchorObj: null,
+        domEl: null
+      },
+      {
+        id: 'hs-7',
+        title: 'Ribosomes (80S Complexes)',
+        role: 'Protein Translation Machinery',
+        color: '#007FA4',
+        description: 'Macromolecular ribonucleoprotein complexes (composed of 40S and 60S subunits) operating freely in the cytosol or bound to the Rough ER.',
+        functions: [
+          'mRNA Decoding: Reads three-base genetic codons along messenger RNA strands.',
+          'Peptide Bond Catalysis: Links amino acids carried by transfer RNA (tRNA) into polypeptide chains.',
+          'Cytosolic vs. Secretory Targeting: Free ribosomes make internal proteins; ER-bound ribosomes make exported/membrane proteins.'
+        ],
+        position: new THREE.Vector3(0.3500, 0.2700, 0.1000),
+        normal: new THREE.Vector3(0.2500, 0.8000, 0.5400),
+        anchorObj: null,
+        domEl: null
+      },
+      {
+        id: 'hs-8',
+        title: 'Cytoplasm & Cytoskeleton',
+        role: 'Structural Matrix & Intracellular Highways',
+        color: '#5091CD',
+        description: 'The nutrient-rich cytosol gel and an interconnected scaffolding of microtubules, actin microfilaments, and intermediate filaments.',
+        functions: [
+          'Mechanical Shape & Motility: Maintains 3D cell architecture and drives cell crawling and cytokinesis.',
+          'Motor Protein Highways: Kinesin and dynein walk along microtubule tracks to transport organelles.',
+          'Glycolysis & Metabolic Hub: Hosts cytosolic enzymes that break down glucose into pyruvate.'
+        ],
+        position: new THREE.Vector3(0.1200, 0.5400, -0.1400),
+        normal: new THREE.Vector3(0.1000, 0.5000, 0.8600),
+        anchorObj: null,
+        domEl: null
+      }
+    ];
+
+    function base64ToArrayBuffer(base64) {
+      const binaryString = window.atob(base64);
+      const len = binaryString.length;
+      const bytes = new Uint8Array(len);
+      for (let i = 0; i < len; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      return bytes.buffer;
+    }
+
+    async function loadGlbModel(sourceUrl, displayTitle, displaySizeLabel, isInitialLoad = false) {
+      showLoading(`Loading ${displayTitle}…`);
+      try {
+        let gltf;
+        const isFileProtocol = window.location.protocol === 'file:';
+        const isBlobUrl = sourceUrl.startsWith('blob:');
+
+        if (isFileProtocol && !isBlobUrl && window.__INLINE_CELLS_GLB_BASE64__) {
+          const buffer = base64ToArrayBuffer(window.__INLINE_CELLS_GLB_BASE64__);
+          gltf = await new Promise((resolve, reject) => {
+            gltfLoader.parse(buffer, '', resolve, reject);
+          });
+        } else {
+          try {
+            gltf = await gltfLoader.loadAsync(sourceUrl);
+          } catch (fetchErr) {
+            if (window.__INLINE_CELLS_GLB_BASE64__) {
+              const buffer = base64ToArrayBuffer(window.__INLINE_CELLS_GLB_BASE64__);
+              gltf = await new Promise((resolve, reject) => {
+                gltfLoader.parse(buffer, '', resolve, reject);
+              });
+            } else {
+              throw fetchErr;
+            }
+          }
+        }
+        setupLoadedGltf(gltf, displayTitle, displaySizeLabel, isInitialLoad);
+      } catch (err) {
+        console.error('Error loading GLB:', err);
+        loadingText.textContent = `Could not fetch ${displayTitle}. Drag & drop your .glb file onto the window!`;
+        setTimeout(hideLoading, 2800);
+      }
+    }
+
+    function setupLoadedGltf(gltf, displayTitle, displaySizeLabel, isInitialLoad = false) {
+      if (currentModelRoot) {
+        modelPivot.remove(currentModelRoot);
+        currentModelRoot.traverse((child) => {
+          if (child.isMesh) child.geometry?.dispose();
+        });
+      }
+
+      currentModelRoot = gltf.scene;
+      modelPivot.position.set(0, 0, 0);
+      modelPivot.rotation.set(0, 0, 0);
+      modelPivot.scale.set(1, 1, 1);
+      modelPivot.add(currentModelRoot);
+
+      meshList = [];
+      let totalVerts = 0;
+      let totalTris = 0;
+
+      currentModelRoot.traverse((child) => {
+        if (child.isMesh) {
+          meshList.push(child);
+          const geom = child.geometry;
+          if (geom) {
+            const posAttr = geom.attributes.position;
+            if (posAttr) totalVerts += posAttr.count;
+            if (geom.index) {
+              totalTris += Math.floor(geom.index.count / 3);
+            } else if (posAttr) {
+              totalTris += Math.floor(posAttr.count / 3);
+            }
+          }
+          if (child.material) {
+            const mat = child.material;
+            if (!mat.userData.originalMapsSaved) {
+              mat.userData.originalMapsSaved = true;
+              mat.userData.origMap = mat.map || null;
+              mat.userData.origNormalMap = mat.normalMap || null;
+              mat.userData.origRoughnessMap = mat.roughnessMap || null;
+              mat.userData.origMetalnessMap = mat.metalnessMap || null;
+            }
+          }
+        }
+      });
+
+      const box = new THREE.Box3().setFromObject(currentModelRoot);
+      const size = box.getSize(new THREE.Vector3());
+      const center = box.getCenter(new THREE.Vector3());
+      const maxDim = Math.max(size.x, size.y, size.z);
+      if (maxDim > 0 && (maxDim > 2.5 || maxDim < 0.15)) {
+        const scaleFactor = 0.85 / maxDim;
+        currentModelRoot.scale.multiplyScalar(scaleFactor);
+        box.setFromObject(currentModelRoot);
+        box.getCenter(center);
+        currentModelRoot.position.x -= center.x;
+        currentModelRoot.position.y -= box.min.y;
+        currentModelRoot.position.z -= center.z;
+      }
+
+      statFilesizeEl.textContent = displaySizeLabel;
+      statVertsEl.textContent = totalVerts.toLocaleString();
+      statTrisEl.textContent = totalTris.toLocaleString();
+
+      setupEmbeddedAnimations(gltf.animations || []);
+      applyMaterialSettings();
+      rebuildHotspotDomAndAnchors();
+      hideLoading();
+
+      // Open Hotspot #1 (Nucleus & Nucleolus) on initial load so the user immediately sees the cell functions UI
+      if (isInitialLoad && hotspots.length > 0) {
+        selectHotspot(hotspots[0].id, false);
+      }
+    }
+
+    const matState = {
+      tint: '#ffffff',
+      emissive: '#000000',
+      mono: false,
+      roughness: 0.65,
+      metalness: 0.10,
+      normalScale: 1.0,
+      opacity: 1.0,
+      useBaseColorMap: true,
+      useNormalMap: true,
+      useRmMap: true,
+      wireframe: false
+    };
+
+    function applyMaterialSettings() {
+      meshList.forEach((mesh) => {
+        const mat = mesh.material;
+        if (!mat) return;
+
+        const showColorTex = matState.useBaseColorMap && !matState.mono;
+        mat.map = showColorTex ? mat.userData.origMap : null;
+        mat.normalMap = matState.useNormalMap ? mat.userData.origNormalMap : null;
+        mat.roughnessMap = matState.useRmMap ? mat.userData.origRoughnessMap : null;
+        mat.metalnessMap = matState.useRmMap ? mat.userData.origMetalnessMap : null;
+
+        if (mat.color) mat.color.set(matState.tint);
+        if (mat.emissive) mat.emissive.set(matState.emissive);
+        if (typeof mat.roughness === 'number') mat.roughness = matState.roughness;
+        if (typeof mat.metalness === 'number') mat.metalness = matState.metalness;
+        if (mat.normalScale) mat.normalScale.set(matState.normalScale, matState.normalScale);
+
+        mat.wireframe = matState.wireframe;
+        mat.transparent = matState.opacity < 0.99;
+        mat.opacity = matState.opacity;
+        mat.depthWrite = matState.opacity > 0.5;
+        mat.needsUpdate = true;
+      });
+    }
+
+    const selectGltfClip = document.getElementById('select-gltf-clip');
+    const clipStatusNote = document.getElementById('clip-status-note');
+
+    function setupEmbeddedAnimations(animations) {
+      if (animationMixer) {
+        animationMixer.stopAllAction();
+        animationMixer = null;
+      }
+      gltfClips = animations;
+      selectGltfClip.innerHTML = '';
+
+      if (animations.length === 0) {
+        const opt = document.createElement('option');
+        opt.value = 'none';
+        opt.textContent = 'No embedded keyframe clips (0 tracks)';
+        selectGltfClip.appendChild(opt);
+      } else {
+        animationMixer = new THREE.AnimationMixer(currentModelRoot);
+        animations.forEach((clip, idx) => {
+          const opt = document.createElement('option');
+          opt.value = String(idx);
+          opt.textContent = `${idx + 1}. ${clip.name || 'Animation Clip'} (${clip.duration.toFixed(1)}s)`;
+          selectGltfClip.appendChild(opt);
+        });
+        const noneOpt = document.createElement('option');
+        noneOpt.value = 'none';
+        noneOpt.textContent = 'Disable Embedded Clip';
+        selectGltfClip.appendChild(noneOpt);
+        clipStatusNote.textContent = `Found ${animations.length} embedded keyframe animation clip(s)!`;
+        playEmbeddedClip(0);
+      }
+    }
+
+    function playEmbeddedClip(index) {
+      if (!animationMixer) return;
+      animationMixer.stopAllAction();
+      if (index === 'none' || !gltfClips[index]) return;
+      const action = animationMixer.clipAction(gltfClips[index]);
+      action.reset().play();
+    }
+
+    selectGltfClip.addEventListener('change', (e) => {
+      const val = e.target.value;
+      playEmbeddedClip(val === 'none' ? 'none' : Number(val));
+    });
+
+    function rebuildHotspotDomAndAnchors() {
+      hotspotsLayer.innerHTML = '';
+      hotspotSidebarList.innerHTML = '';
+      document.getElementById('btn-toggle-hotspots').textContent = `Hotspots (${hotspots.length})`;
+      document.getElementById('tab-hotspots').textContent = `Cell Functions (${hotspots.length})`;
+
+      hotspots.forEach((hs) => {
+        if (hs.anchorObj && hs.anchorObj.parent) {
+          hs.anchorObj.parent.remove(hs.anchorObj);
+        }
+      });
+
+      hotspots.forEach((hs, idx) => {
+        const anchor = new THREE.Object3D();
+        anchor.position.copy(hs.position);
+        modelPivot.add(anchor);
+        hs.anchorObj = anchor;
+
+        const pinBtn = document.createElement('button');
+        pinBtn.type = 'button';
+        pinBtn.className = 'hotspot-pin' + (hs.id === activeHotspotId ? ' active' : '');
+        pinBtn.style.setProperty('--pin-color', hs.color || '#0ea5e9');
+        pinBtn.setAttribute('aria-label', `Organelle ${idx + 1}: ${hs.title}`);
+        pinBtn.innerHTML = `<span>${idx + 1}</span><span class="hotspot-pin-label">${escapeHtml(hs.title)}</span>`;
+        pinBtn.addEventListener('click', (ev) => {
+          ev.stopPropagation();
+          if (quizState.active) {
+            handleQuizGuess(hs.id);
+            return;
+          }
+          stopGuidedTour();
+          selectHotspot(hs.id, true);
+        });
+        hotspotsLayer.appendChild(pinBtn);
+        hs.domEl = pinBtn;
+
+        const item = document.createElement('button');
+        item.type = 'button';
+        item.style.width = '100%';
+        item.style.textAlign = 'left';
+        item.className = 'hotspot-list-item' + (hs.id === activeHotspotId ? ' active' : '');
+        item.dataset.searchText = `${hs.title} ${hs.role} ${hs.description} ${(hs.functions || []).join(' ')}`.toLowerCase();
+        item.innerHTML = `
+          <div class="hotspot-list-item-header">
+            <h4><span class="hotspot-card-badge" style="background:${hs.color || '#4E2A84'}">#${idx + 1}</span> ${escapeHtml(hs.title)}</h4>
+          </div>
+          <p><strong style="color:#4E2A84">${escapeHtml(hs.role || 'Cellular Structure')}:</strong> ${escapeHtml(hs.description)}</p>
+        `;
+        item.addEventListener('click', () => {
+          if (quizState.active) {
+            handleQuizGuess(hs.id);
+            return;
+          }
+          stopGuidedTour();
+          selectHotspot(hs.id, true);
+        });
+        hotspotSidebarList.appendChild(item);
+      });
+
+      hotspotsLayer.style.display = hotspotsVisible ? 'block' : 'none';
+    }
+
+    function selectHotspot(id, flyCamera = true) {
+      const index = hotspots.findIndex((h) => h.id === id);
+      if (index === -1) return;
+      const hs = hotspots[index];
+      activeHotspotId = id;
+
+      hotspots.forEach((h) => {
+        if (h.domEl) h.domEl.classList.toggle('active', h.id === id);
+      });
+      Array.from(hotspotSidebarList.children).forEach((el, i) => {
+        const isCurrent = i === index;
+        el.classList.toggle('active', isCurrent);
+        if (isCurrent) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      });
+
+      hotspotCardIndex.textContent = `#${index + 1} of ${hotspots.length}`;
+      hotspotCardIndex.style.background = hs.color || '#0ea5e9';
+      hotspotCardRole.textContent = hs.role || 'Cellular Organelle';
+      hotspotCardTitle.textContent = hs.title;
+      hotspotCardDesc.textContent = hs.description;
+
+      hotspotCardFunctions.innerHTML = '';
+      const fnList = hs.functions && hs.functions.length > 0
+        ? hs.functions
+        : ['Maintains cellular homeostasis and structural integrity.', 'Participates in metabolic signaling pathways.'];
+      fnList.forEach((fnText) => {
+        const li = document.createElement('li');
+        li.textContent = fnText;
+        hotspotCardFunctions.appendChild(li);
+      });
+
+      hotspotCard.hidden = false;
+      announce(`Selected organelle ${index + 1} of ${hotspots.length}: ${hs.title}. ${hs.role}.`);
+
+      if (flyCamera && hs.anchorObj) {
+        const worldPos = new THREE.Vector3();
+        hs.anchorObj.getWorldPosition(worldPos);
+
+        // Always look down from an elevated front-top angle into the open cutaway of the cell
+        const lookTarget = worldPos.clone().lerp(DEFAULT_CAM_TARGET, 0.55);
+        const desiredCamPos = new THREE.Vector3(
+          lookTarget.x + worldPos.x * 0.6,
+          0.95,
+          Math.max(0.75, lookTarget.z + 0.85)
+        );
+
+        flyCameraTo(desiredCamPos, lookTarget);
+      }
+    }
+
+    // Prev / Next Organelle Tour Navigation
+    document.getElementById('btn-prev-hotspot').addEventListener('click', () => {
+      stopGuidedTour();
+      if (hotspots.length === 0) return;
+      const curIdx = hotspots.findIndex((h) => h.id === activeHotspotId);
+      const prevIdx = (curIdx - 1 + hotspots.length) % hotspots.length;
+      selectHotspot(hotspots[prevIdx].id, true);
+    });
+
+    document.getElementById('btn-next-hotspot').addEventListener('click', () => {
+      stopGuidedTour();
+      if (hotspots.length === 0) return;
+      const curIdx = hotspots.findIndex((h) => h.id === activeHotspotId);
+      const nextIdx = (curIdx + 1) % hotspots.length;
+      selectHotspot(hotspots[nextIdx].id, true);
+    });
+
+    // Auto-Guided Cell Tour
+    const btnGuidedTour = document.getElementById('btn-guided-tour');
+    function stopGuidedTour() {
+      if (guidedTourTimer) {
+        clearInterval(guidedTourTimer);
+        guidedTourTimer = null;
+        btnGuidedTour.textContent = '▶ Guided Cell Tour';
+        btnGuidedTour.classList.remove('btn-primary');
+        btnGuidedTour.classList.add('btn-secondary');
+      }
+    }
+
+    btnGuidedTour.addEventListener('click', () => {
+      if (guidedTourTimer) {
+        stopGuidedTour();
+        return;
+      }
+      if (hotspots.length === 0) return;
+      btnGuidedTour.textContent = '⏹ Stop Cell Tour';
+      btnGuidedTour.classList.remove('btn-secondary');
+      btnGuidedTour.classList.add('btn-primary');
+
+      let curIdx = hotspots.findIndex((h) => h.id === activeHotspotId);
+      curIdx = (curIdx + 1) % hotspots.length;
+      selectHotspot(hotspots[curIdx].id, true);
+
+      guidedTourTimer = setInterval(() => {
+        if (hotspots.length === 0) {
+          stopGuidedTour();
+          return;
+        }
+        const idx = hotspots.findIndex((h) => h.id === activeHotspotId);
+        const nextIdx = (idx + 1) % hotspots.length;
+        selectHotspot(hotspots[nextIdx].id, true);
+      }, 4500);
+    });
+
+    hotspotCardClose.addEventListener('click', () => {
+      stopGuidedTour();
+      activeHotspotId = null;
+      hotspotCard.hidden = true;
+      hotspots.forEach((h) => h.domEl?.classList.remove('active'));
+      Array.from(hotspotSidebarList.children).forEach((el) => el.classList.remove('active'));
+    });
+
+    hotspotCardDelete.addEventListener('click', () => {
+      stopGuidedTour();
+      if (!activeHotspotId) return;
+      const idx = hotspots.findIndex((h) => h.id === activeHotspotId);
+      if (idx !== -1) {
+        hotspots.splice(idx, 1);
+        activeHotspotId = null;
+        hotspotCard.hidden = true;
+        rebuildHotspotDomAndAnchors();
+      }
+    });
+
+    const projVec = new THREE.Vector3();
+    const normalMatrix = new THREE.Matrix3();
+    const worldNorm = new THREE.Vector3();
+    const camToPin = new THREE.Vector3();
+
+    function updateHotspotsProjection() {
+      if (!hotspotsVisible) return;
+      const rect = canvas.getBoundingClientRect();
+      normalMatrix.getNormalMatrix(modelPivot.matrixWorld);
+
+      hotspots.forEach((hs) => {
+        if (!hs.anchorObj || !hs.domEl) return;
+        hs.anchorObj.getWorldPosition(projVec);
+
+        worldNorm.copy(hs.normal).applyMatrix3(normalMatrix).normalize();
+        camToPin.copy(projVec).sub(camera.position).normalize();
+        const dot = worldNorm.dot(camToPin);
+
+        projVec.project(camera);
+
+        if (projVec.z > 1) {
+          hs.domEl.style.display = 'none';
+          return;
+        }
+
+        const x = (projVec.x * 0.5 + 0.5) * rect.width;
+        const y = (-projVec.y * 0.5 + 0.5) * rect.height;
+
+        hs.domEl.style.display = 'flex';
+        hs.domEl.style.left = `${x}px`;
+        hs.domEl.style.top = `${y}px`;
+        hs.domEl.classList.toggle('occluded', dot > 0.25);
+      });
+    }
+
+    const raycaster = new THREE.Raycaster();
+    const pointerNDC = new THREE.Vector2();
+
+    function setPlacementMode(enabled) {
+      stopGuidedTour();
+      isPlacingHotspot = enabled;
+      viewportContainer.classList.toggle('placing-hotspot', enabled);
+      placementBanner.hidden = !enabled;
+      const btnAdd = document.getElementById('btn-add-hotspot');
+      btnAdd.classList.toggle('active', enabled);
+      btnAdd.setAttribute('aria-pressed', String(enabled));
+      if (!enabled) surfaceCursor.visible = false;
+    }
+
+    document.getElementById('btn-add-hotspot').addEventListener('click', () => {
+      setPlacementMode(!isPlacingHotspot);
+    });
+
+    document.getElementById('btn-sidebar-add-hotspot').addEventListener('click', () => {
+      setPlacementMode(true);
+    });
+
+    btnCancelPlacement.addEventListener('click', () => setPlacementMode(false));
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && isPlacingHotspot) setPlacementMode(false);
+    });
+
+    canvas.addEventListener('pointermove', (e) => {
+      if (!isPlacingHotspot || meshList.length === 0) return;
+      const rect = canvas.getBoundingClientRect();
+      pointerNDC.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      pointerNDC.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+      raycaster.setFromCamera(pointerNDC, camera);
+      const hits = raycaster.intersectObjects(meshList, true);
+      if (hits.length > 0) {
+        const hit = hits[0];
+        surfaceCursor.visible = true;
+        surfaceCursor.position.copy(hit.point);
+        if (hit.face) {
+          const n = hit.face.normal.clone().transformDirection(hit.object.matrixWorld).normalize();
+          surfaceCursor.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), n);
+          surfaceCursor.position.addScaledVector(n, 0.003);
+        }
+      } else {
+        surfaceCursor.visible = false;
+      }
+    });
+
+    canvas.addEventListener('pointerdown', (e) => {
+      if (!isPlacingHotspot || e.button !== 0 || meshList.length === 0) return;
+      const rect = canvas.getBoundingClientRect();
+      pointerNDC.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      pointerNDC.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+      raycaster.setFromCamera(pointerNDC, camera);
+      const hits = raycaster.intersectObjects(meshList, true);
+      if (hits.length > 0) {
+        const hit = hits[0];
+        const localPoint = modelPivot.worldToLocal(hit.point.clone());
+        const worldNormal = hit.face
+          ? hit.face.normal.clone().transformDirection(hit.object.matrixWorld).normalize()
+          : new THREE.Vector3(0, 1, 0);
+        const invPivotQuat = modelPivot.quaternion.clone().invert();
+        const localNormal = worldNormal.applyQuaternion(invPivotQuat).normalize();
+
+        pendingHotspotHit = { position: localPoint, normal: localNormal };
+        setPlacementMode(false);
+
+        dialogCoordsPreview.textContent = `Surface Point: (${localPoint.x.toFixed(3)}, ${localPoint.y.toFixed(3)}, ${localPoint.z.toFixed(3)})`;
+        inputHotspotTitle.value = '';
+        inputHotspotRole.value = '';
+        inputHotspotDesc.value = '';
+        dialogAddHotspot.showModal();
+        inputHotspotTitle.focus();
+      }
+    });
+
+    formAddHotspot.addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (!pendingHotspotHit) return;
+      const newId = 'hs-' + Date.now();
+      const rawDesc = inputHotspotDesc.value.trim() || 'User-defined cellular structure and function.';
+      hotspots.push({
+        id: newId,
+        title: inputHotspotTitle.value.trim() || `Cell Organelle #${hotspots.length + 1}`,
+        role: inputHotspotRole.value.trim() || 'Custom Cellular Function',
+        color: '#14b8a6',
+        description: rawDesc,
+        functions: [rawDesc],
+        position: pendingHotspotHit.position,
+        normal: pendingHotspotHit.normal,
+        anchorObj: null,
+        domEl: null
+      });
+      pendingHotspotHit = null;
+      dialogAddHotspot.close();
+      rebuildHotspotDomAndAnchors();
+      selectHotspot(newId, true);
+    });
+
+    document.getElementById('btn-close-dialog').addEventListener('click', () => dialogAddHotspot.close());
+    document.getElementById('btn-cancel-dialog').addEventListener('click', () => dialogAddHotspot.close());
+
+    function flyCameraTo(targetCamPos, targetLookAt) {
+      if (reduceMotion) {
+        camera.position.copy(targetCamPos);
+        controls.target.copy(targetLookAt);
+        controls.update();
+        camTransition = null;
+        return;
+      }
+      camTransition = {
+        startPos: camera.position.clone(),
+        endPos: targetCamPos.clone(),
+        startTarget: controls.target.clone(),
+        endTarget: targetLookAt.clone(),
+        progress: 0
+      };
+    }
+
+    controls.addEventListener('start', () => {
+      camTransition = null;
+    });
+
+    // --- Search / Filter Organelles ---
+    const searchInput = document.getElementById('input-organelle-search');
+    searchInput.addEventListener('input', () => {
+      const q = searchInput.value.trim().toLowerCase();
+      Array.from(hotspotSidebarList.children).forEach((el) => {
+        const hay = el.dataset.searchText || '';
+        el.hidden = q !== '' && !hay.includes(q);
+      });
+    });
+
+    // --- Interactive Quiz / Study Mode ---
+    const quizBanner = document.getElementById('quiz-banner');
+    const quizProgressEl = document.getElementById('quiz-progress');
+    const quizQuestionEl = document.getElementById('quiz-question-text');
+    const quizFeedbackEl = document.getElementById('quiz-feedback-text');
+    const btnQuizMode = document.getElementById('btn-quiz-mode');
+
+    const quizQuestions = [
+      { targetId: 'hs-2', prompt: 'Click the organelle responsible for generating ATP via aerobic cellular respiration.' },
+      { targetId: 'hs-1', prompt: 'Click the genetic control center that houses chromosomal DNA and forms ribosomal subunits.' },
+      { targetId: 'hs-4', prompt: 'Click the organelle that modifies, sorts, and packages proteins into vesicles for secretion.' },
+      { targetId: 'hs-5', prompt: 'Click the selective phospholipid barrier that controls nutrient entry and signal transduction.' },
+      { targetId: 'hs-6', prompt: 'Click the digestive & detox vesicles that recycle worn-out organelles and neutralize H₂O₂.' },
+      { targetId: 'hs-7', prompt: 'Click the 80S molecular complexes that decode mRNA and link amino acids into proteins.' },
+      { targetId: 'hs-3', prompt: 'Click the membrane network that folds secretory proteins (Rough) and synthesizes lipids (Smooth).' },
+      { targetId: 'hs-8', prompt: 'Click the structural matrix and microtubule highway system that supports cell shape and motility.' }
+    ];
+
+    const quizState = { active: false, index: 0, score: 0 };
+
+    function startQuiz() {
+      stopGuidedTour();
+      quizState.active = true;
+      quizState.index = 0;
+      quizState.score = 0;
+      document.body.classList.add('quiz-active');
+      btnQuizMode.setAttribute('aria-pressed', 'true');
+      btnQuizMode.classList.add('btn-primary');
+      btnQuizMode.classList.remove('btn-secondary');
+      hotspotCard.hidden = true;
+      quizBanner.hidden = false;
+      renderQuizQuestion();
+      showToast('Quiz Mode started — click a numbered pin on the 3D cell!');
+    }
+
+    function stopQuiz() {
+      quizState.active = false;
+      document.body.classList.remove('quiz-active');
+      btnQuizMode.setAttribute('aria-pressed', 'false');
+      btnQuizMode.classList.remove('btn-primary');
+      btnQuizMode.classList.add('btn-secondary');
+      quizBanner.hidden = true;
+    }
+
+    function renderQuizQuestion() {
+      const q = quizQuestions[quizState.index];
+      quizProgressEl.textContent = `Question ${quizState.index + 1} of ${quizQuestions.length} • Score: ${quizState.score}`;
+      quizQuestionEl.textContent = q.prompt;
+      quizFeedbackEl.textContent = '';
+      quizFeedbackEl.className = 'quiz-feedback';
+    }
+
+    function handleQuizGuess(guessedId) {
+      const q = quizQuestions[quizState.index];
+      const targetHs = hotspots.find((h) => h.id === q.targetId);
+      if (guessedId === q.targetId) {
+        quizState.score++;
+        quizFeedbackEl.textContent = `Correct! That is the ${targetHs ? targetHs.title : ''}.`;
+        quizFeedbackEl.className = 'quiz-feedback correct';
+        selectHotspot(q.targetId, true);
+        setTimeout(() => {
+          if (!quizState.active) return;
+          quizState.index++;
+          if (quizState.index >= quizQuestions.length) {
+            showToast(`Quiz Complete! Final Score: ${quizState.score} / ${quizQuestions.length}`);
+            stopQuiz();
+          } else {
+            renderQuizQuestion();
+          }
+        }, 1800);
+      } else {
+        const guessedHs = hotspots.find((h) => h.id === guessedId);
+        quizFeedbackEl.textContent = `Not quite — that pin is ${guessedHs ? guessedHs.title : 'another structure'}. Try again!`;
+        quizFeedbackEl.className = 'quiz-feedback wrong';
+      }
+    }
+
+    btnQuizMode.addEventListener('click', () => (quizState.active ? stopQuiz() : startQuiz()));
+    document.getElementById('btn-exit-quiz').addEventListener('click', stopQuiz);
+
+    // --- Accessibility Toggles: Reduce Motion, Large Text, Shortcuts Dialog & Global Keyboard Nav ---
+    const btnReduceMotion = document.getElementById('btn-reduce-motion');
+    const btnPlayPauseRef = document.getElementById('btn-play-pause');
+    function applyReduceMotion(enabled) {
+      reduceMotion = enabled;
+      btnReduceMotion.classList.toggle('active', enabled);
+      btnReduceMotion.setAttribute('aria-pressed', String(enabled));
+      if (enabled) {
+        isPlayingAnim = false;
+        if (btnPlayPauseRef) btnPlayPauseRef.textContent = 'Resume Animation';
+        modelPivot.position.set(0, 0, 0);
+        modelPivot.scale.set(1, 1, 1);
+      }
+    }
+    applyReduceMotion(reduceMotion);
+
+    btnReduceMotion.addEventListener('click', () => {
+      applyReduceMotion(!reduceMotion);
+      showToast(reduceMotion ? 'Reduced Motion enabled' : 'Reduced Motion disabled');
+    });
+
+    const btnLargeText = document.getElementById('btn-large-text');
+    btnLargeText.addEventListener('click', () => {
+      const isLarge = document.body.classList.toggle('large-text');
+      btnLargeText.setAttribute('aria-pressed', String(isLarge));
+      showToast(isLarge ? 'Larger text enabled' : 'Standard text size restored');
+    });
+
+    const dialogShortcuts = document.getElementById('dialog-shortcuts');
+    document.getElementById('btn-shortcuts').addEventListener('click', () => dialogShortcuts.showModal());
+    document.getElementById('btn-close-shortcuts').addEventListener('click', () => dialogShortcuts.close());
+    document.getElementById('btn-done-shortcuts').addEventListener('click', () => dialogShortcuts.close());
+
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const tabPanels = document.querySelectorAll('.tab-panel');
+
+    // WAI-ARIA Arrow key support for Tabs
+    const tabListEl = document.querySelector('[role="tablist"]');
+    tabListEl.addEventListener('keydown', (e) => {
+      const tabs = Array.from(tabBtns);
+      const cur = tabs.indexOf(document.activeElement);
+      if (cur === -1) return;
+      if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        const next = tabs[(cur + 1) % tabs.length];
+        next.focus();
+        next.click();
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        const prev = tabs[(cur - 1 + tabs.length) % tabs.length];
+        prev.focus();
+        prev.click();
+      }
+    });
+
+    // Global Keyboard Shortcuts (1-8, Arrows, Space, R, H, ?)
+    window.addEventListener('keydown', (e) => {
+      const tag = document.activeElement?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
+      if (e.key >= '1' && e.key <= '8') {
+        const idx = Number(e.key) - 1;
+        if (hotspots[idx]) {
+          stopGuidedTour();
+          selectHotspot(hotspots[idx].id, true);
+        }
+      } else if (e.key === 'ArrowRight') {
+        const curIdx = hotspots.findIndex((h) => h.id === activeHotspotId);
+        const nextIdx = (curIdx + 1) % hotspots.length;
+        selectHotspot(hotspots[nextIdx].id, true);
+      } else if (e.key === 'ArrowLeft') {
+        const curIdx = hotspots.findIndex((h) => h.id === activeHotspotId);
+        const prevIdx = (curIdx - 1 + hotspots.length) % hotspots.length;
+        selectHotspot(hotspots[prevIdx].id, true);
+      } else if (e.key === ' ' && document.activeElement === canvas) {
+        e.preventDefault();
+        btnPlayPauseRef.click();
+        showToast(isPlayingAnim ? 'Animation resumed' : 'Animation paused');
+      } else if (e.key === 'r' || e.key === 'R') {
+        flyCameraTo(DEFAULT_CAM_POS, DEFAULT_CAM_TARGET);
+        showToast('Camera view reset');
+      } else if (e.key === 'h' || e.key === 'H') {
+        btnToggleHotspots.click();
+      } else if (e.key === '?') {
+        dialogShortcuts.showModal();
+      }
+    });
+    tabBtns.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const targetId = btn.getAttribute('aria-controls');
+        tabBtns.forEach((b) => {
+          const isSelected = b === btn;
+          b.classList.toggle('active', isSelected);
+          b.setAttribute('aria-selected', String(isSelected));
+        });
+        tabPanels.forEach((panel) => {
+          panel.hidden = panel.id !== targetId;
+        });
+      });
+    });
+
+    document.querySelectorAll('#lod-preset-list .preset-item').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#lod-preset-list .preset-item').forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+        const lodFile = btn.dataset.lod;
+        const sizeText = btn.dataset.size;
+        currentActiveFileUrl = lodFile;
+        loadGlbModel(lodFile, lodFile, sizeText, false);
+      });
+    });
+
+    document.getElementById('btn-download-glb').addEventListener('click', () => {
+      if (!currentCustomBlobUrl && window.location.protocol === 'file:' && window.__INLINE_CELLS_GLB_BASE64__) {
+        const buf = base64ToArrayBuffer(window.__INLINE_CELLS_GLB_BASE64__);
+        const blob = new Blob([buf], { type: 'model/gltf-binary' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'cells-lite-2.61MB.glb';
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 2000);
+        return;
+      }
+      const a = document.createElement('a');
+      a.href = currentCustomBlobUrl || currentActiveFileUrl;
+      a.download = currentCustomBlobUrl ? modelTitleEl.textContent : currentActiveFileUrl;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    });
+
+    document.querySelectorAll('#color-swatches .swatch-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#color-swatches .swatch-btn').forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+        matState.tint = btn.dataset.tint || '#ffffff';
+        matState.emissive = btn.dataset.emissive || '#000000';
+        matState.mono = btn.dataset.mono === 'true';
+        document.getElementById('input-custom-color').value = matState.tint;
+        applyMaterialSettings();
+      });
+    });
+
+    document.getElementById('input-custom-color').addEventListener('input', (e) => {
+      matState.tint = e.target.value;
+      matState.mono = false;
+      document.querySelectorAll('#color-swatches .swatch-btn').forEach((b) => b.classList.remove('active'));
+      applyMaterialSettings();
+    });
+
+    function bindSlider(sliderId, outputId, formatFn, onChangeFn) {
+      const slider = document.getElementById(sliderId);
+      const out = document.getElementById(outputId);
+      slider.addEventListener('input', () => {
+        const val = parseFloat(slider.value);
+        out.textContent = formatFn(val);
+        onChangeFn(val);
+      });
+    }
+
+    bindSlider('slider-roughness', 'out-roughness', (v) => v.toFixed(2), (v) => {
+      matState.roughness = v;
+      applyMaterialSettings();
+    });
+
+    bindSlider('slider-metalness', 'out-metalness', (v) => v.toFixed(2), (v) => {
+      matState.metalness = v;
+      applyMaterialSettings();
+    });
+
+    bindSlider('slider-normal', 'out-normal', (v) => v.toFixed(2), (v) => {
+      matState.normalScale = v;
+      applyMaterialSettings();
+    });
+
+    bindSlider('slider-opacity', 'out-opacity', (v) => v.toFixed(2), (v) => {
+      matState.opacity = v;
+      applyMaterialSettings();
+    });
+
+    bindSlider('slider-exposure', 'out-exposure', (v) => v.toFixed(2), (v) => {
+      renderer.toneMappingExposure = v;
+    });
+
+    document.getElementById('chk-basecolor').addEventListener('change', (e) => {
+      matState.useBaseColorMap = e.target.checked;
+      applyMaterialSettings();
+    });
+
+    document.getElementById('chk-normalmap').addEventListener('change', (e) => {
+      matState.useNormalMap = e.target.checked;
+      applyMaterialSettings();
+    });
+
+    document.getElementById('chk-rmmap').addEventListener('change', (e) => {
+      matState.useRmMap = e.target.checked;
+      applyMaterialSettings();
+    });
+
+    document.getElementById('chk-wireframe').addEventListener('change', (e) => {
+      matState.wireframe = e.target.checked;
+      applyMaterialSettings();
+    });
+
+    document.querySelectorAll('#proc-anim-list .preset-item').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#proc-anim-list .preset-item').forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+        procAnimMode = btn.dataset.anim;
+        if (procAnimMode === 'none') {
+          modelPivot.position.set(0, 0, 0);
+          modelPivot.scale.set(1, 1, 1);
+        }
+      });
+    });
+
+    const btnPlayPause = document.getElementById('btn-play-pause');
+    btnPlayPause.addEventListener('click', () => {
+      isPlayingAnim = !isPlayingAnim;
+      btnPlayPause.textContent = isPlayingAnim ? 'Pause Animation' : 'Resume Animation';
+    });
+
+    bindSlider('slider-anim-speed', 'out-anim-speed', (v) => `${v.toFixed(1)}x`, (v) => {
+      animSpeed = v;
+      if (animationMixer) animationMixer.timeScale = v;
+    });
+
+    bindSlider('slider-pulse-amp', 'out-pulse-amp', (v) => `${v}%`, (v) => {
+      pulseAmplitude = v / 100;
+    });
+
+    document.querySelectorAll('[data-cam]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        stopGuidedTour();
+        const view = btn.dataset.cam;
+        if (view === 'reset') {
+          flyCameraTo(DEFAULT_CAM_POS, DEFAULT_CAM_TARGET);
+        } else if (view === 'front') {
+          flyCameraTo(new THREE.Vector3(0, 0.34, 1.45), DEFAULT_CAM_TARGET);
+        } else if (view === 'side') {
+          flyCameraTo(new THREE.Vector3(1.45, 0.34, 0), DEFAULT_CAM_TARGET);
+        } else if (view === 'top') {
+          flyCameraTo(new THREE.Vector3(0, 1.65, 0.05), DEFAULT_CAM_TARGET);
+        }
+      });
+    });
+
+    const btnToggleHotspots = document.getElementById('btn-toggle-hotspots');
+    btnToggleHotspots.addEventListener('click', () => {
+      hotspotsVisible = !hotspotsVisible;
+      btnToggleHotspots.classList.toggle('active', hotspotsVisible);
+      btnToggleHotspots.setAttribute('aria-pressed', String(hotspotsVisible));
+      hotspotsLayer.style.display = hotspotsVisible ? 'block' : 'none';
+      if (!hotspotsVisible) hotspotCard.hidden = true;
+    });
+
+    const btnToggleGrid = document.getElementById('btn-toggle-grid');
+    btnToggleGrid.addEventListener('click', () => {
+      gridHelper.visible = !gridHelper.visible;
+      btnToggleGrid.classList.toggle('active', gridHelper.visible);
+      btnToggleGrid.setAttribute('aria-pressed', String(gridHelper.visible));
+    });
+
+    document.getElementById('btn-screenshot').addEventListener('click', () => {
+      renderer.render(scene, camera);
+      const dataUrl = canvas.toDataURL('image/png');
+      const a = document.createElement('a');
+      a.href = dataUrl;
+      a.download = `cell-3d-snapshot.png`;
+      a.click();
+    });
+
+    function handleCustomFile(file) {
+      if (!file) return;
+      if (currentCustomBlobUrl) URL.revokeObjectURL(currentCustomBlobUrl);
+      currentCustomBlobUrl = URL.createObjectURL(file);
+      const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+      modelSubtitleEl.textContent = 'Custom Loaded 3D Asset';
+      loadGlbModel(currentCustomBlobUrl, file.name, `${sizeMB} MB`, false);
+    }
+
+    document.getElementById('file-input').addEventListener('change', (e) => {
+      const file = e.target.files?.[0];
+      if (file) handleCustomFile(file);
+    });
+
+    window.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropOverlay.hidden = false;
+    });
+
+    dropOverlay.addEventListener('dragleave', (e) => {
+      if (e.target === dropOverlay) dropOverlay.hidden = true;
+    });
+
+    window.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropOverlay.hidden = true;
+      const file = e.dataTransfer?.files?.[0];
+      if (file && /\.(glb|gltf)$/i.test(file.name)) {
+        handleCustomFile(file);
+      }
+    });
+
+    function onResize() {
+      const rect = viewportContainer.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) return;
+      camera.aspect = rect.width / rect.height;
+      camera.updateProjectionMatrix();
+      renderer.setSize(rect.width, rect.height, false);
+    }
+    window.addEventListener('resize', onResize);
+    onResize();
+
+    function showLoading(msg) {
+      loadingText.textContent = msg;
+      loadingOverlay.hidden = false;
+    }
+    function hideLoading() {
+      loadingOverlay.hidden = true;
+    }
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    const clock = new THREE.Clock();
+    let frameCount = 0;
+    let fpsAccumTime = 0;
+
+    function animate() {
+      requestAnimationFrame(animate);
+
+      const dt = clock.getDelta();
+      frameCount++;
+      fpsAccumTime += dt;
+      if (fpsAccumTime >= 0.5) {
+        statFpsEl.textContent = String(Math.min(144, Math.round(frameCount / fpsAccumTime)));
+        frameCount = 0;
+        fpsAccumTime = 0;
+      }
+
+      if (animationMixer && isPlayingAnim) {
+        animationMixer.update(dt * animSpeed);
+      }
+
+      if (isPlayingAnim && procAnimMode !== 'none') {
+        elapsedAnimTime += dt * animSpeed;
+
+        if (procAnimMode === 'pulse-turntable') {
+          modelPivot.rotation.y += dt * 0.15 * animSpeed;
+          const s = 1.0 + Math.sin(elapsedAnimTime * 0.65) * pulseAmplitude;
+          const sy = 1.0 + Math.cos(elapsedAnimTime * 0.65) * (pulseAmplitude * 0.75);
+          modelPivot.scale.set(s, sy, s);
+          modelPivot.position.y = Math.sin(elapsedAnimTime * 0.45) * 0.005;
+        } else if (procAnimMode === 'respiration') {
+          const s = 1.0 + Math.sin(elapsedAnimTime * 0.65) * pulseAmplitude;
+          const sy = 1.0 + Math.cos(elapsedAnimTime * 0.65) * (pulseAmplitude * 0.8);
+          modelPivot.scale.set(s, sy, s);
+          modelPivot.position.y = Math.sin(elapsedAnimTime * 0.45) * 0.004;
+        } else if (procAnimMode === 'float') {
+          modelPivot.position.y = Math.sin(elapsedAnimTime * 0.7) * 0.025;
+          modelPivot.rotation.z = Math.sin(elapsedAnimTime * 0.45) * 0.04;
+          modelPivot.rotation.x = Math.cos(elapsedAnimTime * 0.35) * 0.035;
+          modelPivot.scale.set(1, 1, 1);
+        } else if (procAnimMode === 'turntable') {
+          modelPivot.rotation.y += dt * 0.25 * animSpeed;
+          modelPivot.scale.set(1, 1, 1);
+          modelPivot.position.y = 0;
+        }
+      }
+
+      if (camTransition) {
+        camTransition.progress = Math.min(1, camTransition.progress + dt * 2.4);
+        const t = 1 - Math.pow(1 - camTransition.progress, 3);
+        camera.position.lerpVectors(camTransition.startPos, camTransition.endPos, t);
+        controls.target.lerpVectors(camTransition.startTarget, camTransition.endTarget, t);
+        if (camTransition.progress >= 1) {
+          camTransition = null;
+        }
+      }
+
+      controls.update();
+      renderer.render(scene, camera);
+      updateHotspotsProjection();
+    }
+
+    animate();
+    loadGlbModel('cells-original.glb', 'Interactive 3D Cell Atlas (Original cells.glb)', '60.05 MB (Original)', true);
+  </script>
+</body>
+</html>
