@@ -1152,15 +1152,15 @@
     <div class="stats-pill-group" role="region" aria-label="3D Model Statistics">
       <div class="stat-pill">
         <span class="stat-label">GLB Size</span>
-        <strong class="stat-value highlight-green" id="stat-filesize">60.05 MB (Original)</strong>
+        <strong class="stat-value highlight-green" id="stat-filesize">7.76 MB (-87.1%)</strong>
       </div>
       <div class="stat-pill">
         <span class="stat-label">Vertices</span>
-        <strong class="stat-value" id="stat-verts">1,219,782</strong>
+        <strong class="stat-value" id="stat-verts">155,407</strong>
       </div>
       <div class="stat-pill">
         <span class="stat-label">Triangles</span>
-        <strong class="stat-value" id="stat-tris">1,976,499</strong>
+        <strong class="stat-value" id="stat-tris">245,764</strong>
       </div>
       <div class="stat-pill">
         <span class="stat-label">FPS</span>
@@ -1509,9 +1509,9 @@
               <p>63,756 verts • 79,930 tris • 16-bit indices • UV-seam locked</p>
             </button>
 
-            <button type="button" class="preset-item" data-lod="cells.glb" data-size="7.76 MB (-87.1%)">
+            <button type="button" class="preset-item active" data-lod="cells.glb" data-size="7.76 MB (-87.1%)">
               <div class="preset-main">
-                <strong>Balanced High-Res</strong>
+                <strong>Balanced High-Res (Active)</strong>
                 <span class="badge badge-info">7.76 MB • -87.1%</span>
               </div>
               <p>155,407 verts • 245,764 tris • 32-bit indices</p>
@@ -1523,14 +1523,6 @@
                 <span class="badge badge-neutral">17.74 MB • -70.5%</span>
               </div>
               <p>341,687 verts • 620,722 tris</p>
-            </button>
-
-            <button type="button" class="preset-item active" data-lod="cells-original.glb" data-size="60.05 MB (Original)">
-              <div class="preset-main">
-                <strong>Original Raw File (Active)</strong>
-                <span class="badge badge-warn">60.05 MB • 0%</span>
-              </div>
-              <p>1,219,782 verts • 1,976,499 tris</p>
             </button>
           </div>
         </div>
@@ -1591,9 +1583,6 @@
       <button type="button" id="btn-done-shortcuts" class="btn btn-primary">Got It</button>
     </div>
   </dialog>
-
-  <!-- Synchronous inline fallback script so file:// protocol has the 2.61 MB GLB ready in memory -->
-  <script src="cells-inline-fallback.js"></script>
 
   <!-- Inline ES Module so Chrome/Edge file:// CORS never blocks external module scripts -->
   <script type="module">
@@ -1701,7 +1690,7 @@
     gltfLoader.setDRACOLoader(dracoLoader);
 
     let currentModelRoot = null;
-    let currentActiveFileUrl = 'cells-original.glb';
+    let currentActiveFileUrl = 'cells.glb';
     let currentCustomBlobUrl = null;
     let meshList = [];
     let animationMixer = null;
@@ -2902,7 +2891,7 @@
     }
 
     animate();
-    loadGlbModel('cells-original.glb', 'Interactive 3D Cell Atlas (Original cells.glb)', '60.05 MB (Original)', true);
+    loadGlbModel('cells.glb', 'Interactive 3D Cell Atlas (cells.glb)', '7.76 MB (-87.1%)', true);
   </script>
 </body>
 </html>
